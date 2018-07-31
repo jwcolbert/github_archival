@@ -35,3 +35,15 @@ for repo in g.get_organization(org).get_repos():
     tar = subprocess.Popen(['/usr/bin/tar', '-czf', tarname, repodir])
     tar.wait()
     remove = subprocess.Popen(['rm', '-rf', repodir])
+    s3_dest = "s3://github-archives/" + tarname
+    backup = subprocess.Popen(['s3cmd', 'put', tarname, s3_dest])
+    backup_success = backup.communicate()[0]
+    if backup.returncode != 0:
+        print("Error Backing up " + tarname)
+        exit
+    else:
+        if repo.private:
+            print("Deleting Private Repo: " + repo.name)
+            repo.delete()
+        else:
+            print("Public Repo, not deleting")
